@@ -291,8 +291,3 @@ h1, h2, h3 {
     background: rgba(8, 8, 16, 0.95) !important;
   }
 }
-
-/* Ensure padding so bottom navbar doesn't cover content */
-body {
-  padding-bottom: 20px;
-}

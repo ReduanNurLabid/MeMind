@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DECKS } from '../decks';
 
-const HomeScreen = ({ onStart }) => {
+const HomeScreen = ({ onStart, onLoadCache, reports }) => {
   const [step, setStep] = useState(1);
   const [selectedDeck, setSelectedDeck] = useState(DECKS[0].id);
   const [inputMode, setInputMode] = useState('voice');
@@ -76,8 +76,21 @@ const HomeScreen = ({ onStart }) => {
                 opacity: userName.trim().length >= 3 ? 1 : 0.5,
                 transition: 'all 0.3s ease'
               }}>
-              Next &rarr;
+              New Session &rarr;
             </button>
+            
+            {Object.keys(reports || {}).length > 0 && (
+              <div style={{ marginTop: '2.5rem' }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>You have existing psychological assessments saved.</p>
+                <button 
+                  onClick={() => onLoadCache()} 
+                  className="btn-primary" 
+                  style={{ fontSize: '1rem', padding: '0.6rem 1.5rem', borderColor: 'var(--text-muted)' }}
+                >
+                  View Master Profile ({Object.values(reports)[0]?.userName})
+                </button>
+              </div>
+            )}
           </div>
         )}
 

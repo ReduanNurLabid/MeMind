@@ -185,41 +185,43 @@ export default function Brain3D({ triggers = [], avgBaselineTime = 2.0 }) {
       side: THREE.DoubleSide
     });
 
-    const loader = new GLTFLoader();
-    const brainModelUrl = `${import.meta.env.BASE_URL}brain.glb`;
-    loader.load(brainModelUrl, (gltf) => {
-      gltf.scene.traverse((child) => {
-        if (child.isMesh) {
-          child.material = fleshyMaterial;
-          
-          // Perfectly center the geometry around its own local origin
-          child.geometry.center();
-          child.geometry.computeBoundingBox();
-          
-          const box = child.geometry.boundingBox;
-          const size = new THREE.Vector3();
-          box.getSize(size);
-          
-          const maxDim = Math.max(size.x, size.y, size.z);
-          
-          // Apply user's manually tweaked transforms
-          const s = 3.6 / maxDim; 
-          child.scale.set(s, s, s);
-          
-          child.rotation.set(
-            -88 * Math.PI / 180,
-            0 * Math.PI / 180,
-            77 * Math.PI / 180
-          );
-          
-          child.position.set(0, 0, 0);
-          
-          brainGroup.add(child);
-        }
+    if (!isMobile) {
+      const loader = new GLTFLoader();
+      const brainModelUrl = `${import.meta.env.BASE_URL}brain.glb`;
+      loader.load(brainModelUrl, (gltf) => {
+        gltf.scene.traverse((child) => {
+          if (child.isMesh) {
+            child.material = fleshyMaterial;
+            
+            // Perfectly center the geometry around its own local origin
+            child.geometry.center();
+            child.geometry.computeBoundingBox();
+            
+            const box = child.geometry.boundingBox;
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            
+            // Apply user's manually tweaked transforms
+            const s = 3.6 / maxDim; 
+            child.scale.set(s, s, s);
+            
+            child.rotation.set(
+              -88 * Math.PI / 180,
+              0 * Math.PI / 180,
+              77 * Math.PI / 180
+            );
+            
+            child.position.set(0, 0, 0);
+            
+            brainGroup.add(child);
+          }
+        });
+      }, undefined, (error) => {
+        console.error('Failed to load brain.glb:', error);
       });
-    }, undefined, (error) => {
-      console.error('Failed to load brain.glb:', error);
-    });
+    }
 
     // Points generation
     const points = [];
