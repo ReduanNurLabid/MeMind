@@ -234,3 +234,65 @@ h1, h2, h3 {
   transform: scale(1.03);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
 }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  h2 {
+    font-size: 1.5rem !important;
+  }
+  
+  .glass-panel {
+    padding: 1.2rem !important;
+    border-radius: 16px !important;
+  }
+
+  /* Make the floating action bar buttons iconic only on mobile */
+  .action-btn span:not(.material-symbols-outlined) {
+    display: none;
+  }
+  
+  .action-btn {
+    padding: 12px !important;
+    border-radius: 50% !important;
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+  }
+  
+  /* Shrink brain canvas height on mobile */
+  .brain-canvas-container {
+    min-height: 400px !important;
+    height: 50vh !important;
+  }
+  
+  /* Ensure HUD cards fit */
+  .hud-cards-container {
+    bottom: 8px !important;
+    padding: 8px !important;
+  }
+  
+  /* Stack grid layouts nicely */
+  .trigger-analysis-card {
+    padding: 1.2rem !important;
+  }
+
+  .action-bar-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    bottom: 0 !important;
+    padding: 12px 16px !important;
+    justify-content: space-around !important;
+    margin-top: 1rem !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: 0 -4px 25px rgba(0,0,0,0.8) !important;
+    background: rgba(8, 8, 16, 0.95) !important;
+  }
+}
+
+/* Ensure padding so bottom navbar doesn't cover content */
+body {
+  padding-bottom: 20px;
+}

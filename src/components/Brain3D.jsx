@@ -111,6 +111,7 @@ export default function Brain3D({ triggers = [], avgBaselineTime = 2.0 }) {
 
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 650;
+    const isMobile = window.innerWidth <= 768;
 
     // 1. Scene Setup
     const scene = new THREE.Scene();
@@ -124,12 +125,12 @@ export default function Brain3D({ triggers = [], avgBaselineTime = 2.0 }) {
 
     // 3. Renderer Setup
     const renderer = new THREE.WebGLRenderer({ 
-      antialias: true, 
+      antialias: !isMobile, 
       preserveDrawingBuffer: true, 
       powerPreference: 'high-performance' 
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
@@ -175,12 +176,12 @@ export default function Brain3D({ triggers = [], avgBaselineTime = 2.0 }) {
       emissive: 0x4a0022,
       roughness: 0.25,
       metalness: 0.05,
-      clearcoat: 1.0,
+      clearcoat: isMobile ? 0 : 1.0,
       clearcoatRoughness: 0.15,
-      transmission: 0.75, // More glass-like to see the neural net inside
-      thickness: 1.5,
+      transmission: isMobile ? 0 : 0.75, // Disable heavy dual-pass glass on mobile
+      thickness: isMobile ? 0 : 1.5,
       transparent: true,
-      opacity: 0.85,
+      opacity: isMobile ? 0.6 : 0.85,
       side: THREE.DoubleSide
     });
 
@@ -493,7 +494,8 @@ export default function Brain3D({ triggers = [], avgBaselineTime = 2.0 }) {
 
       {/* 3D WebGL Canvas Container */}
       <div 
-        ref={mountRef} 
+        ref={mountRef}
+        className="brain-canvas-container"
         style={{ 
           width: '100%', 
           height: '100%', 
@@ -504,7 +506,7 @@ export default function Brain3D({ triggers = [], avgBaselineTime = 2.0 }) {
       />
 
       {/* Interactive Trigger HUD Cards on bottom of 3D brain */}
-      <div style={{ 
+      <div className="hud-cards-container" style={{ 
         position: 'absolute', 
         bottom: '16px', 
         left: '20px', 

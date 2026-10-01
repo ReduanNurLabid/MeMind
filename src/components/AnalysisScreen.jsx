@@ -408,7 +408,7 @@ const AnalysisScreen = ({ answers, inputMode, userName, onRestart }) => {
           const similarity = semanticScores[ans.word] || 0;
           const timeDiff = ans.timeTaken - avgBaselineTime;
           return (
-            <div key={idx} className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: !ans.response || timeDiff > 0.8 ? '4px solid #ef4444' : timeDiff < -0.3 ? '4px solid #10b981' : '4px solid var(--accent-color)' }}>
+            <div key={idx} className="glass-panel trigger-analysis-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: !ans.response || timeDiff > 0.8 ? '4px solid #ef4444' : timeDiff < -0.3 ? '4px solid #10b981' : '4px solid var(--accent-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -451,7 +451,7 @@ const AnalysisScreen = ({ answers, inputMode, userName, onRestart }) => {
       </div>
       
       {/* Floating Action Bar (Sticky Bottom) */}
-      <div style={{
+      <div className="action-bar-container" style={{
         position: 'sticky',
         bottom: '20px',
         zIndex: 100,
