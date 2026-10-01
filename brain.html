@@ -1,0 +1,281 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Scientific Brain Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111827; /* Dark gray background */
+            font-family: sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="info">Neural Network Brain Model</div>
+
+    <!-- 1. Include Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- 2. Include OrbitControls (Must come after Three.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- 3. Main Scene Logic -->
+    <script>
+        // --- Configuration ---
+        const CONFIG = {
+            particleCount: 2500,
+            connectionDistance: 1.2,
+            brainColor: 0x00aaff, // Cyan
+            connectionColor: 0xaa00ff, // Purple/Pink
+            bgColor: 0x111827
+        };
+
+        // --- Variables ---
+        let scene, camera, renderer, controls, gridHelper;
+        let brainParticles, brainLines;
+        let animationId;
+
+        function init() {
+            // 1. Scene Setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.bgColor);
+            scene.fog = new THREE.Fog(CONFIG.bgColor, 10, 50);
+
+            // 2. Camera Setup
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 5, 12);
+
+            // 3. Renderer Setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // 4. Controls Setup
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+
+            // 5. Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(5, 10, 7);
+            scene.add(dirLight);
+
+            const pointLight = new THREE.PointLight(0x00ffff, 1, 20);
+            pointLight.position.set(0, 2, 0);
+            scene.add(pointLight);
+
+            // 6. Grid Helper
+            // Color center line, Color grid
+            gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+            gridHelper.position.y = -4; // Position below the brain
+            scene.add(gridHelper);
+
+            // 7. Generate Brain Model
+            createBrainModel();
+
+            // 8. Event Listeners
+            window.addEventListener('resize', onWindowResize);
+
+            // 9. Expose Functions to Parent Window
+            window.resetCamera = function() {
+                controls.reset();
+                camera.position.set(0, 5, 12);
+            };
+
+            window.toggleGrid = function() {
+                gridHelper.visible = !gridHelper.visible;
+            };
+
+            // 10. Start Animation Loop
+            animate();
+        }
+
+        function createBrainModel() {
+            const brainGroup = new THREE.Group();
+            
+            // Generate points within brain volume
+            const points = [];
+            const colors = [];
+            
+            // Helper to generate particles in an ellipsoid
+            const addEllipsoidPoints = (count, center, radius) => {
+                for (let i = 0; i < count; i++) {
+                    // Random point in sphere
+                    const u = Math.random();
+                    const v = Math.random();
+                    const theta = 2 * Math.PI * u;
+                    const phi = Math.acos(2 * v - 1);
+                    const r = Math.cbrt(Math.random());
+
+                    let x = r * Math.sin(phi) * Math.cos(theta);
+                    let y = r * Math.sin(phi) * Math.sin(theta);
+                    let z = r * Math.cos(phi);
+
+                    // Scale to ellipsoid
+                    x *= radius.x;
+                    y *= radius.y;
+                    z *= radius.z;
+
+                    // Offset
+                    x += center.x;
+                    y += center.y;
+                    z += center.z;
+
+                    points.push(new THREE.Vector3(x, y, z));
+                    
+                    // Color gradient based on position (Front=Cyan, Back=Pink)
+                    const color = new THREE.Color();
+                    const mix = (z + 2) / 4; // Normalize roughly
+                    color.lerpColors(new THREE.Color(CONFIG.brainColor), new THREE.Color(CONFIG.connectionColor), mix);
+                    colors.push(color.r, color.g, color.b);
+                }
+            };
+
+            // Left Hemisphere
+            addEllipsoidPoints(1000, new THREE.Vector3(-0.6, 0, 0), new THREE.Vector3(1.4, 1.8, 2.2));
+            // Right Hemisphere
+            addEllipsoidPoints(1000, new THREE.Vector3(0.6, 0, 0), new THREE.Vector3(1.4, 1.8, 2.2));
+            // Cerebellum (Back bottom)
+            addEllipsoidPoints(400, new THREE.Vector3(0, -1.5, -1.2), new THREE.Vector3(1.8, 1.0, 1.0));
+            // Brain Stem
+            addEllipsoidPoints(100, new THREE.Vector3(0, -2.5, -0.2), new THREE.Vector3(0.6, 1.5, 0.6));
+
+            // --- Create Particles ---
+            const particleGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            particleGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            // Generate a simple circle texture for particles programmatically
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 0.15,
+                vertexColors: true,
+                map: createCircleTexture(),
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            brainParticles = new THREE.Points(particleGeometry, particleMaterial);
+            brainGroup.add(brainParticles);
+
+            // --- Create Connections (The "Web") ---
+            // Finding close neighbors to draw lines
+            const linePositions = [];
+            const lineColors = [];
+            
+            // Optimization: Only check a subset or use a distance threshold
+            // For 2500 points, N^2 is 6.25m, a bit heavy for init but manageable once.
+            // We will limit connections per point to keep it performant and clean.
+            
+            const maxConnections = 4;
+            
+            for (let i = 0; i < points.length; i++) {
+                let connections = 0;
+                for (let j = i + 1; j < points.length; j++) {
+                    const dist = points[i].distanceTo(points[j]);
+                    
+                    if (dist < CONFIG.connectionDistance) {
+                        linePositions.push(points[i].x, points[i].y, points[i].z);
+                        linePositions.push(points[j].x, points[j].y, points[j].z);
+                        
+                        // Mix colors of the two points
+                        lineColors.push(colors[i*3], colors[i*3+1], colors[i*3+2]);
+                        lineColors.push(colors[j*3], colors[j*3+1], colors[j*3+2]);
+                        
+                        connections++;
+                        if (connections >= maxConnections) break;
+                    }
+                }
+            }
+
+            const linesGeometry = new THREE.BufferGeometry();
+            linesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+            linesGeometry.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
+
+            const linesMaterial = new THREE.LineBasicMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.15,
+                blending: THREE.AdditiveBlending
+            });
+
+            brainLines = new THREE.LineSegments(linesGeometry, linesMaterial);
+            brainGroup.add(brainLines);
+
+            // Center the brain
+            brainGroup.position.y = 0.5;
+            scene.add(brainGroup);
+            
+            // Store for animation
+            scene.userData.brain = brainGroup;
+        }
+
+        // Helper to create a glow texture
+        function createCircleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const context = canvas.getContext('2d');
+            const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 32, 32);
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update Controls (Required for autoRotate)
+            controls.update();
+
+            // Subtle Pulse Animation
+            const time = Date.now() * 0.001;
+            if (scene.userData.brain) {
+                // Floating effect
+                scene.userData.brain.position.y = 0.5 + Math.sin(time) * 0.1;
+                
+                // Pulse size (if accessible via uniforms, but here we keep it simple)
+                // We can rotate the particles slightly different from the lines for a cool effect
+                // but let's keep them synced for structural integrity.
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Initialize application
+        init();
+
+    </script>
+</body>
+</html>
